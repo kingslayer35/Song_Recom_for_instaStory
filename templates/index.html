@@ -219,6 +219,12 @@
       transform: translateY(-1px);
     }
 
+    .submit-button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .spinner {
       display: none;
       margin: 20px auto;
@@ -372,6 +378,80 @@
       line-height: 1.6;
     }
 
+    .audio-generation-section {
+      text-align: center;
+      margin-top: 40px;
+      padding: 30px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 15px;
+      color: white;
+    }
+
+    .audio-generation-section h2 {
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+    }
+
+    .audio-generation-section p {
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .generate-song-button {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid white;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    .generate-song-button:hover {
+      background: white;
+      color: #f5576c;
+      transform: translateY(-2px);
+    }
+
+    .generate-song-button:disabled {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #audioContainer {
+      margin-top: 20px;
+    }
+
+    #audioContainer audio {
+      width: 100%;
+      max-width: 400px;
+      margin: 15px 0;
+      border-radius: 10px;
+    }
+
+    #audioContainer a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      background: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 25px;
+      display: inline-block;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    #audioContainer a:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-1px);
+    }
+
     .error {
       background: #ff6b6b;
       color: white;
@@ -487,6 +567,7 @@
               <label><input type="checkbox" name="artists" value="Cheema Y"> Cheema Y</label>
               <label><input type="checkbox" name="artists" value="Jaani"> Jaani</label>
               <label><input type="checkbox" name="artists" value="Ariana Grande"> Ariana Grande</label>
+              <label><input type="checkbox" name="artists" value="Arijit Singh"> Arijit Singh</label>
             </div>
           </fieldset>
 
@@ -515,6 +596,8 @@
   </div>
 
   <script>
+    let lastDescription = null;
+
     // File preview functionality
     document.getElementById('photo').addEventListener('change', function(event) {
       const previewContainer = document.getElementById('previewContainer');
@@ -589,6 +672,8 @@
         if (result.error) {
           resultsContainer.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> ${result.error}</div>`;
         } else {
+          lastDescription = result.refined_description;
+          
           let html = `
             <div class="description-section">
               <button class="toggle-description" id="toggleDescription">
@@ -627,7 +712,19 @@
             `;
           });
           
-          html += '</div>';
+          html += `
+            </div>
+            
+            <div class="audio-generation-section">
+              <h2><i class="fas fa-waveform-lines"></i> Generate Custom Song</h2>
+              <p>Create a unique piece of music based on your image's description</p>
+              <button id="generateSongBtn" class="generate-song-button">
+                <i class="fas fa-play"></i> Generate Song from This Description
+              </button>
+              <div id="audioContainer"></div>
+            </div>
+          `;
+          
           resultsContainer.innerHTML = html;
           
           // Add event listeners for toggles
@@ -662,6 +759,43 @@
                 '<i class="fas fa-lightbulb"></i> Hide Explanation' : 
                 '<i class="fas fa-lightbulb"></i> Show Explanation';
             });
+          });
+
+          // Audio generation functionality
+          document.getElementById('generateSongBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('generateSongBtn');
+            const audioContainer = document.getElementById('audioContainer');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            audioContainer.innerHTML = '';
+
+            try {
+              const res = await fetch('/generate_song', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: lastDescription })
+              });
+              const data = await res.json();
+
+              const audioHTML = data.audio_url ? `
+                <audio controls>
+                  <source src="${data.audio_url}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+                <br/>
+                <a href="${data.audio_url}" download="generated_song.mp3">
+                  <i class="fas fa-download"></i> Download Song
+                </a>
+              ` : `<p style="color:rgba(255,255,255,0.8);">${data.error || 'Audio not available'}</p>`;
+
+              audioContainer.innerHTML = audioHTML;
+
+            } catch (e) {
+              audioContainer.innerHTML = `<p style="color:rgba(255,255,255,0.8);">Error: ${e.message}</p>`;
+            } finally {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-play"></i> Generate Song from This Description';
+            }
           });
         }
         
