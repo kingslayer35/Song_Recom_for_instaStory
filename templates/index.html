@@ -767,7 +767,12 @@
             const audioContainer = document.getElementById('audioContainer');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-            audioContainer.innerHTML = '';
+            audioContainer.innerHTML = `
+            <p style="color:rgba(255,255,255,0.8); font-style: italic;">
+              🎵 Hang tight! This might take up to 5 minutes.<br>
+              Go stretch, sip some chai, or stare out the window dramatically. Your custom track is loading... 🌟
+            </p>
+            `;
 
             try {
               const res = await fetch('/generate_song', {

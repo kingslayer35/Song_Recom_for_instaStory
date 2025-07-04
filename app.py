@@ -1,14 +1,11 @@
 # app.py
 from flask import Flask, render_template, request, jsonify
 import pickle
-import requests
-import json
-import time
 import os
+import asyncio
 from description import rank_songs, process_image
 from suno_session_manager import generate_song_on_suno
-import asyncio
-
+from suno_automation import automate_login
 
 app = Flask(__name__)
 
@@ -132,7 +129,6 @@ Requirements:
         print(f"❌ Gemini error: {e}")
         return None
 
-
 @app.route('/generate_song', methods=['POST'])
 def generate_song():
     try:
@@ -155,7 +151,12 @@ def generate_song():
             return jsonify({'error': 'Failed to generate lyrics'}), 500
 
         print("✅ Lyrics generation complete.")
-        
+
+        # Check if session file exists and is valid
+        session_file = "suno_session.json"
+        if not os.path.exists(session_file) or os.path.getsize(session_file) < 100:
+            print("🔒 No valid Suno session found. Initiating login...")
+            asyncio.run(automate_login())
 
         print("🎧 Generating audio with Suno...")
         audio_url = asyncio.run(generate_song_on_suno(lyrics))
