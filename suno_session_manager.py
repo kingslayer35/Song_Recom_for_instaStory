@@ -35,22 +35,29 @@ async def generate_song_on_suno(lyrics: str):
 
         # Step 3: Instruct user to manually pass security check
         print("🛡️ Please complete the visual security check manually...")
-        print("⏳ Waiting for track to render... (you have 3 minutes)")
+        print("⏳ Waiting for track to render... (you have 4 minutes)")
 
+        
+
+        # Wait for new song to appear — use a unique attribute of new song cards
+        print("⏳ Waiting for the newest song to appear...")
+
+        await asyncio.sleep(240)  # Wait for 4 minutes to allow user to complete security check
         try:
-            # Wait up to 3 minutes for some element that appears only after track loads
-            await page.wait_for_selector('button[aria-label="More Options"]', timeout=240000)
-            print("✅ Track rendered.")
+            await page.wait_for_selector('[data-testid="song-row"]', timeout=24000)
+            print("✅ New song row appeared.")
         except Exception as e:
-            print("❌ Timeout: Track did not render or visual check not cleared.")
+            print(f"❌ Timed out waiting for new song row: {e}")
             return
 
-        # Step 4: Continue automated steps
+        # Get the first song-row (newest) and click its 'More Options' button
         try:
-            await page.click('button[aria-label="More Options"]')
-            print("✅ 3-dots menu clicked.")
+            new_song_row = (await page.query_selector_all('[data-testid="song-row"]'))[0]
+            more_button = await new_song_row.query_selector('button[aria-label="More Options"]')
+            await more_button.click()
+            print("✅ Clicked 'More Options' on newest song.")
         except Exception as e:
-            print(f"❌ Failed to click 3-dots menu: {e}")
+            print(f"❌ Failed to click 'More Options' on newest song: {e}")
             return
 
         try:

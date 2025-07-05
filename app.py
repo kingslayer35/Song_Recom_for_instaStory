@@ -110,7 +110,7 @@ Write a short and meaningful {mood} {genre} song in {language}, based on this im
 Requirements:
 - Family-friendly and emotional tone
 - Use common, singable language
-- Total length must be LESS than 270 characters
+- Total length must be LESS than 250 characters
 - Format strictly as:
 [Verse 1]
 ...
